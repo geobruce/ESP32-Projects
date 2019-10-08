@@ -1,5 +1,9 @@
 # WiFi blink stability test
 
+The base of this program is from: https://randomnerdtutorials.com/esp32-web-server-arduino-ide/ 
+
+
+
 This program is meant to test how stable the ESP32 can be.
 You can controll a blinking LED via a webpage.
 In case somethings goes wrong a watchdog timer will restart / reset the ESP32.
