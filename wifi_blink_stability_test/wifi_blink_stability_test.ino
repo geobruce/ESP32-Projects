@@ -1,6 +1,18 @@
 /*********
   (Origin from Rui Santos)
 
+  Instructions:
+    1. Add your wifi credentials in "WiFiCredentials.h"
+    2. Flash the device
+    3. Open serial monitor and check the IP of the device
+    4. Open your browser and go to the specified IP
+  
+  Bruce Helsen:
+    8 Oct 2019:
+      - Changed the code to blink
+      - Removed one of the two outputs
+      - Remaining output is attached to the onboard LED
+      - Added a watchdog timer in case something goes wrong
 
 *********/
 
@@ -17,16 +29,16 @@ String header;
 
 // Auxiliar variables to store the current output state
 String output2State = "off";
-String output27State = "off";
+
 
 // Assign output variables to GPIO pins
 const int output2 = 2;
-const int output27 = 27;
 
 Ticker secondTick;
 volatile int watchdogCount = 0;
 void ISRwatchdog() {
   watchdogCount++;
+  Serial.println(watchdogCount); 
   if (watchdogCount >= 5) {
     ESP.restart();
   }
@@ -36,10 +48,10 @@ void setup() {
   Serial.begin(115200);
   // Initialize the output variables as outputs
   pinMode(output2, OUTPUT);
-  pinMode(output27, OUTPUT);
+
   // Set outputs to LOW
   digitalWrite(output2, LOW);
-  digitalWrite(output27, LOW);
+
   secondTick.attach(1, ISRwatchdog);
   // Connect to Wi-Fi network with SSID and password
   Serial.print("Connecting to ");
@@ -61,8 +73,10 @@ double lastTime = 0;
 
 void loop() {
   while (WiFi.status() == WL_CONNECTED) {
+    
     watchdogCount = 0;
     yield();
+    
     WiFiClient client = server.available();   // Listen for incoming clients
     if (output2State == "on") {
       if ((millis() - lastTime) > 300) {
@@ -70,6 +84,7 @@ void loop() {
         lastTime = millis();
       }
     }
+    
     if (client) {                             // If a new client connects,
       Serial.println("New Client.");          // print a message out in the serial port
       String currentLine = "";                // make a String to hold incoming data from the client
@@ -78,6 +93,7 @@ void loop() {
           char c = client.read();             // read a byte, then
           Serial.write(c);                    // print it out the serial monitor
           header += c;
+          
           if (c == '\n') {                    // if the byte is a newline character
             // if the current line is blank, you got two newline characters in a row.
             // that's the end of the client HTTP request, so send a response:
@@ -92,14 +108,6 @@ void loop() {
                 Serial.println("GPIO 2 off");
                 output2State = "off";
                 digitalWrite(output2, LOW);
-              } else if (header.indexOf("GET /27/on") >= 0) {
-                Serial.println("GPIO 27 on");
-                output27State = "on";
-                digitalWrite(output27, HIGH);
-              } else if (header.indexOf("GET /27/off") >= 0) {
-                Serial.println("GPIO 27 off");
-                output27State = "off";
-                digitalWrite(output27, LOW);
               }
               sendHTML(client);
 
@@ -113,10 +121,13 @@ void loop() {
           }
         }
       }
+      
       // Clear the header variable
       header = "";
+      
       // Close the connection
       client.stop();
+      
       Serial.println("Client disconnected.");
       Serial.println("");
     }
@@ -153,15 +164,6 @@ void sendHTML(WiFiClient client) {
     client.println("<p><a href=\"/2/on\"><button class=\"button\">ON</button></a></p>");
   } else {
     client.println("<p><a href=\"/2/off\"><button class=\"button button2\">OFF</button></a></p>");
-  }
-
-  // Display current state, and ON/OFF buttons for GPIO 27
-  client.println("<p>GPIO 27 - State " + output27State + "</p>");
-  // If the output27State is off, it displays the ON button
-  if (output27State == "off") {
-    client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
-  } else {
-    client.println("<p><a href=\"/27/off\"><button class=\"button button2\">OFF</button></a></p>");
   }
   client.println("</body></html>");
 
