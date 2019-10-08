@@ -1,7 +1,7 @@
 /*********
   (Origin from Rui Santos)
-    
-  
+
+
 *********/
 
 // Load Wi-Fi library
@@ -82,13 +82,7 @@ void loop() {
             // if the current line is blank, you got two newline characters in a row.
             // that's the end of the client HTTP request, so send a response:
             if (currentLine.length() == 0) {
-              // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-              // and a content-type so the client knows what's coming, then a blank line:
-              client.println("HTTP/1.1 200 OK");
-              client.println("Content-type:text/html");
-              client.println("Connection: close");
-              client.println();
-
+              sendHTTPHeader(client);
               // turns the GPIOs on and off
               if (header.indexOf("GET /2/on") >= 0) {
                 Serial.println("GPIO 2 on");
@@ -107,42 +101,8 @@ void loop() {
                 output27State = "off";
                 digitalWrite(output27, LOW);
               }
+              sendHTML(client);
 
-              // Display the HTML web page
-              client.println("<!DOCTYPE html><html>");
-              client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-              client.println("<link rel=\"icon\" href=\"data:,\">");
-              // CSS to style the on/off buttons
-              // Feel free to change the background-color and font-size attributes to fit your preferences
-              client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
-              client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
-              client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
-              client.println(".button2 {background-color: #555555;}</style></head>");
-
-              // Web Page Heading
-              client.println("<body><h1>ESP32 Web Server</h1>");
-
-              // Display current state, and ON/OFF buttons for GPIO 2
-              client.println("<p>GPIO 2 - State " + output2State + "</p>");
-              // If the output2State is off, it displays the ON button
-              if (output2State == "off") {
-                client.println("<p><a href=\"/2/on\"><button class=\"button\">ON</button></a></p>");
-              } else {
-                client.println("<p><a href=\"/2/off\"><button class=\"button button2\">OFF</button></a></p>");
-              }
-
-              // Display current state, and ON/OFF buttons for GPIO 27
-              client.println("<p>GPIO 27 - State " + output27State + "</p>");
-              // If the output27State is off, it displays the ON button
-              if (output27State == "off") {
-                client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
-              } else {
-                client.println("<p><a href=\"/27/off\"><button class=\"button button2\">OFF</button></a></p>");
-              }
-              client.println("</body></html>");
-
-              // The HTTP response ends with another blank line
-              client.println();
               // Break out of the while loop
               break;
             } else { // if you got a newline, then clear currentLine
@@ -161,4 +121,50 @@ void loop() {
       Serial.println("");
     }
   }
+}
+
+void sendHTTPHeader(WiFiClient client) {
+  // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+  // and a content-type so the client knows what's coming, then a blank line:
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-type:text/html");
+  client.println("Connection: close");
+  client.println();
+}
+void sendHTML(WiFiClient client) {
+  // Display the HTML web page
+  client.println("<!DOCTYPE html><html>");
+  client.println("<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
+  client.println("<link rel=\"icon\" href=\"data:,\">");
+  // CSS to style the on/off buttons
+  // Feel free to change the background-color and font-size attributes to fit your preferences
+  client.println("<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}");
+  client.println(".button { background-color: #4CAF50; border: none; color: white; padding: 16px 40px;");
+  client.println("text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}");
+  client.println(".button2 {background-color: #555555;}</style></head>");
+
+  // Web Page Heading
+  client.println("<body><h1>ESP32 Web Server</h1>");
+
+  // Display current state, and ON/OFF buttons for GPIO 2
+  client.println("<p>GPIO 2 - State " + output2State + "</p>");
+  // If the output2State is off, it displays the ON button
+  if (output2State == "off") {
+    client.println("<p><a href=\"/2/on\"><button class=\"button\">ON</button></a></p>");
+  } else {
+    client.println("<p><a href=\"/2/off\"><button class=\"button button2\">OFF</button></a></p>");
+  }
+
+  // Display current state, and ON/OFF buttons for GPIO 27
+  client.println("<p>GPIO 27 - State " + output27State + "</p>");
+  // If the output27State is off, it displays the ON button
+  if (output27State == "off") {
+    client.println("<p><a href=\"/27/on\"><button class=\"button\">ON</button></a></p>");
+  } else {
+    client.println("<p><a href=\"/27/off\"><button class=\"button button2\">OFF</button></a></p>");
+  }
+  client.println("</body></html>");
+
+  // The HTTP response ends with another blank line
+  client.println();
 }
