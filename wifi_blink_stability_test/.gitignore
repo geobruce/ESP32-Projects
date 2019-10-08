@@ -1,0 +1,2 @@
+//ignore updates in the wifi password and network name
+WiFiCredentials.h
